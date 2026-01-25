@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CV Generator</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 24px;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 8px;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="start">Start</button>
+    <div id="status"></div>
+    <div id="app" class="grid"></div>
+
+    <script type="module" src="./dist/main.js"></script>
+  </body>
+</html>
