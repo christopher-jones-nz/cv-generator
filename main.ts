@@ -173,8 +173,14 @@ function normalize(
   };
 }
 
-function renderCheckboxList(title: string, items: string[]) {
+function renderCheckboxList(
+  sectionKey: string,
+  title: string,
+  items: string[],
+) {
   const wrap = document.createElement("div");
+  wrap.dataset.section = sectionKey;
+
   const h = document.createElement("h3");
   h.textContent = title;
   wrap.appendChild(h);
@@ -185,7 +191,7 @@ function renderCheckboxList(title: string, items: string[]) {
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.checked = true; // default include
+    cb.checked = true;
     cb.dataset.idx = String(idx);
 
     label.appendChild(cb);
@@ -200,11 +206,11 @@ function renderApp(db: CvDb) {
   const app = $("app");
   app.innerHTML = "";
 
-  app.appendChild(renderCheckboxList("Technical Skills", db.technicalSkills));
-  app.appendChild(renderCheckboxList("Soft Skills", db.softSkills));
-  app.appendChild(renderCheckboxList("Technologies", db.technologies));
-  app.appendChild(renderCheckboxList("Achievements", db.achievements));
-  app.appendChild(renderCheckboxList("Hobbies", db.hobbies));
+  app.appendChild(renderCheckboxList("technicalSkills", "Technical Skills", db.technicalSkills));
+  app.appendChild(renderCheckboxList("softSkills", "Soft Skills", db.softSkills));
+  app.appendChild(renderCheckboxList("technologies", "Technologies", db.technologies));
+  app.appendChild(renderCheckboxList("achievements", "Achievements", db.achievements));
+  app.appendChild(renderCheckboxList("hobbies", "Hobbies", db.hobbies));
 
   // Work/Education/Referees are tables; keep minimal for now
   const w = document.createElement("div");
@@ -235,9 +241,9 @@ function renderApp(db: CvDb) {
 
 function collectSelection(db: CvDb) {
   const app = $("app");
-  const pick = (selector: string, arr: any[]) => {
+  const pick = (sectionKey: string, arr: any[]) => {
     const idx: number[] = [];
-    app.querySelectorAll<HTMLInputElement>(selector).forEach((cb) => {
+    app.querySelectorAll<HTMLInputElement>(`div[data-section="${sectionKey}"] input[data-idx]`).forEach((cb) => {
       if (cb.checked) idx.push(Number(cb.dataset.idx));
     });
     return idx;
@@ -254,11 +260,11 @@ function collectSelection(db: CvDb) {
 
   return {
     includeSummary: true,
-    technicalSkillIdx: pick(
-      'h3:contains("Technical Skills")',
-      db.technicalSkills,
-    ), // (not used; keep simple)
-    // In practice you'd select by wrapping per section and querying within it.
+    technicalSkillIdx: pick("technicalSkills", db.technicalSkills),
+    softSkillIdx: pick("softSkills", db.softSkills),
+    technologiesIdx: pick("technologies", db.technologies),
+    achievementsIdx: pick("achievements", db.achievements),
+    hobbiesIdx: pick("hobbies", db.hobbies),
     workExperienceIdx: workIdx,
   };
 }
@@ -267,6 +273,21 @@ function collectSelection(db: CvDb) {
 function generateCvHtml(db: CvDb, selection: any): string {
   const work = selection.workExperienceIdx.map(
     (i: number) => db.workExperience[i],
+  );
+  const technicalSkills = selection.technicalSkillIdx.map(
+    (i: number) => db.technicalSkills[i],
+  );
+  const softSkills = selection.softSkillIdx.map(
+    (i: number) => db.softSkills[i],
+  );
+  const technologies = selection.technologiesIdx.map(
+    (i: number) => db.technologies[i],
+  );
+  const achievements = selection.achievementsIdx.map(
+    (i: number) => db.achievements[i],
+  );
+  const hobbies = selection.hobbiesIdx.map(
+    (i: number) => db.hobbies[i],
   );
 
   const esc = (s: string) =>
@@ -286,6 +307,8 @@ function generateCvHtml(db: CvDb, selection: any): string {
     .section { margin-top: 14px; }
     .item { margin-top: 8px; }
     .desc { white-space: pre-wrap; }
+    .skill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .skill-tag { background: #f0f0f0; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; }
   </style>
 </head>
 <body>
@@ -296,6 +319,33 @@ function generateCvHtml(db: CvDb, selection: any): string {
     <h2>Professional Summary</h2>
     <div class="desc">${esc(db.professionalSummary)}</div>
   </div>
+
+  ${technicalSkills.length > 0 ? `
+  <div class="section">
+    <h2>Technical Skills</h2>
+    <div class="skill-list">
+      ${technicalSkills.map((s: string) => `<span class="skill-tag">${esc(s)}</span>`).join("")}
+    </div>
+  </div>
+  ` : ""}
+
+  ${softSkills.length > 0 ? `
+  <div class="section">
+    <h2>Soft Skills</h2>
+    <div class="skill-list">
+      ${softSkills.map((s: string) => `<span class="skill-tag">${esc(s)}</span>`).join("")}
+    </div>
+  </div>
+  ` : ""}
+
+  ${technologies.length > 0 ? `
+  <div class="section">
+    <h2>Technologies</h2>
+    <div class="skill-list">
+      ${technologies.map((s: string) => `<span class="skill-tag">${esc(s)}</span>`).join("")}
+    </div>
+  </div>
+  ` : ""}
 
   <div class="section">
     <h2>Work Experience</h2>
@@ -310,6 +360,24 @@ function generateCvHtml(db: CvDb, selection: any): string {
       )
       .join("")}
   </div>
+
+  ${achievements.length > 0 ? `
+  <div class="section">
+    <h2>Achievements</h2>
+    <ul>
+      ${achievements.map((a: string) => `<li>${esc(a)}</li>`).join("")}
+    </ul>
+  </div>
+  ` : ""}
+
+  ${hobbies.length > 0 ? `
+  <div class="section">
+    <h2>Hobbies</h2>
+    <div class="skill-list">
+      ${hobbies.map((h: string) => `<span class="skill-tag">${esc(h)}</span>`).join("")}
+    </div>
+  </div>
+  ` : ""}
 </body>
 </html>`;
 }
