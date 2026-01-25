@@ -2,8 +2,9 @@
 
 declare const google: any;
 
-const CLIENT_ID = "YOUR_OAUTH_WEB_CLIENT_ID.apps.googleusercontent.com";
-const SPREADSHEET_ID = "YOUR_SHEET_ID";
+const CLIENT_ID =
+  "537194609804-tvj3898rujffqte5isb1nuk0mtje3osb.apps.googleusercontent.com";
+const SPREADSHEET_ID = "1b1Gwv9DpZr79lIj0WqoIpLTu7tjxIHkwC1SLtghrF4w";
 
 const SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
 
@@ -329,6 +330,7 @@ $("start").addEventListener("click", async () => {
     const token = await getAccessToken();
 
     setStatus("Reading Google Sheet…");
+
     const [
       headerCol,
       summaryCol,
@@ -341,16 +343,16 @@ $("start").addEventListener("click", async () => {
       achievementsCol,
       refereesGrid,
     ] = await Promise.all([
-      readRange(token, "Header!A:A"),
-      readRange(token, "Professional Summary!A:A"),
-      readRange(token, "Technical Skills!A:A"),
-      readRange(token, "Soft Skills!A:A"),
-      readRange(token, "Programming Languages and Techn!A:A"),
-      readRange(token, "Work Experience!A:F"),
-      readRange(token, "Education!A:G"),
-      readRange(token, "Hobbies and Interests!A:A"),
-      readRange(token, "Achievements and Extracurricula!A:A"),
-      readRange(token, "Referees!A:E"),
+      readRange(token, "'Header'!A:A"),
+      readRange(token, "'Professional Summary'!A:A"),
+      readRange(token, "'Technical Skills'!A:A"),
+      readRange(token, "'Soft Skills'!A:A"),
+      readRange(token, "'Programming Languages and Technologies'!A:A"),
+      readRange(token, "'Work Experience'!A:F"),
+      readRange(token, "'Education'!A:G"),
+      readRange(token, "'Hobbies and Interests'!A:A"),
+      readRange(token, "'Achievements and Extracurricular Activities'!A:A"),
+      readRange(token, "'Referees'!A:E"),
     ]);
 
     const db = normalize(
