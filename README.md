@@ -14,6 +14,10 @@ npm install
 npx tsc
 ```
 
+After changing `main.ts`, run `npx tsc` again to recompile. You don't need to restart the server - just refresh the browser to load the new JavaScript.
+
+CSV files don't require recompilation - just refresh the browser.
+
 ## Run
 
 The app needs to be served over HTTP (browsers block local file fetches). Use any static file server:
@@ -36,7 +40,7 @@ Edit the CSV files in the `data/` directory:
 
 | File | Content |
 |------|---------|
-| `header.csv` | Name, phone, email |
+| `header.csv` | Name, phone, email, location, LinkedIn URL, GitHub URL |
 | `professional-summary.csv` | Career summary |
 | `technical-skills.csv` | Technical skills list |
 | `soft-skills.csv` | Soft skills list |

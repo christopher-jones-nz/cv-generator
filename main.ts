@@ -28,7 +28,14 @@ type RefereeRow = {
 };
 
 type CvDb = {
-  header: { name: string; phone: string; email: string };
+  header: {
+    name: string;
+    phone: string;
+    email: string;
+    location: string;
+    linkedin: string;
+    github: string;
+  };
   professionalSummary: string;
   technicalSkills: string[];
   softSkills: string[];
@@ -140,7 +147,7 @@ function normalize(
   refs: any[][],
 ): CvDb {
   const headerRows = headerCol.slice(1).map((r) => String(r?.[0] ?? "").trim());
-  const [name = "", phone = "", email = ""] = headerRows;
+  const [name = "", phone = "", email = "", location = "", linkedin = "", github = ""] = headerRows;
 
   const professionalSummary =
     summaryCol
@@ -176,7 +183,7 @@ function normalize(
   }));
 
   return {
-    header: { name, phone, email },
+    header: { name, phone, email, location, linkedin, github },
     professionalSummary,
     technicalSkills: asList(tech),
     softSkills: asList(soft),
@@ -329,7 +336,8 @@ function generateCvHtml(db: CvDb, selection: any): string {
 </head>
 <body>
   <h1>${esc(db.header.name)}</h1>
-  <div class="muted">${esc(db.header.phone)} • ${esc(db.header.email)}</div>
+  <div class="muted">${[db.header.phone, db.header.email, db.header.location].filter(Boolean).map(esc).join(" • ")}</div>
+  ${db.header.linkedin || db.header.github ? `<div class="muted">${[db.header.linkedin, db.header.github].filter(Boolean).map(url => `<a href="${esc(url)}">${esc(url)}</a>`).join(" • ")}</div>` : ""}
 
   <div class="section">
     <h2>Professional Summary</h2>
