@@ -114,6 +114,21 @@ async function loadCSV(filename: string): Promise<string[][]> {
   return parseCSV(text);
 }
 
+async function loadJSON<T>(filename: string): Promise<T> {
+  const res = await fetch(`./data/${filename}`);
+  if (!res.ok) throw new Error(`Failed to load ${filename}: ${res.status}`);
+  return res.json();
+}
+
+type HeaderData = {
+  name: string;
+  phone: string;
+  email: string;
+  location: string;
+  linkedin: string;
+  github: string;
+};
+
 function asList(values: any[][]): string[] {
   // assumes first row is header; filters blank rows
   return values
@@ -135,7 +150,7 @@ function toTable(values: any[][]): Record<string, string>[] {
 }
 
 function normalize(
-  headerCol: any[][],
+  header: HeaderData,
   summaryCol: any[][],
   tech: any[][],
   soft: any[][],
@@ -146,8 +161,6 @@ function normalize(
   ach: any[][],
   refs: any[][],
 ): CvDb {
-  const headerRows = headerCol.slice(1).map((r) => String(r?.[0] ?? "").trim());
-  const [name = "", phone = "", email = "", location = "", linkedin = "", github = ""] = headerRows;
 
   const professionalSummary =
     summaryCol
@@ -183,7 +196,7 @@ function normalize(
   }));
 
   return {
-    header: { name, phone, email, location, linkedin, github },
+    header,
     professionalSummary,
     technicalSkills: asList(tech),
     softSkills: asList(soft),
@@ -336,8 +349,13 @@ function generateCvHtml(db: CvDb, selection: any): string {
 </head>
 <body>
   <h1>${esc(db.header.name)}</h1>
-  <div class="muted">${[db.header.phone, db.header.email, db.header.location].filter(Boolean).map(esc).join(" • ")}</div>
-  ${db.header.linkedin || db.header.github ? `<div class="muted">${[db.header.linkedin, db.header.github].filter(Boolean).map(url => `<a href="${esc(url)}">${esc(url)}</a>`).join(" • ")}</div>` : ""}
+  <div class="contact">
+    ${db.header.phone ? `<div>${esc(db.header.phone)}</div>` : ""}
+    ${db.header.email ? `<div>${esc(db.header.email)}</div>` : ""}
+    ${db.header.location ? `<div>${esc(db.header.location)}</div>` : ""}
+    ${db.header.linkedin ? `<div><a href="${esc(db.header.linkedin)}">${esc(db.header.linkedin)}</a></div>` : ""}
+    ${db.header.github ? `<div><a href="${esc(db.header.github)}">${esc(db.header.github)}</a></div>` : ""}
+  </div>
 
   <div class="section">
     <h2>Professional Summary</h2>
@@ -421,7 +439,7 @@ $("start").addEventListener("click", async () => {
     setStatus("Loading CSV data…");
 
     const [
-      headerCol,
+      header,
       summaryCol,
       techSkillsCol,
       softSkillsCol,
@@ -432,7 +450,7 @@ $("start").addEventListener("click", async () => {
       achievementsCol,
       refereesGrid,
     ] = await Promise.all([
-      loadCSV("header.csv"),
+      loadJSON<HeaderData>("header.json"),
       loadCSV("professional-summary.csv"),
       loadCSV("technical-skills.csv"),
       loadCSV("soft-skills.csv"),
@@ -445,7 +463,7 @@ $("start").addEventListener("click", async () => {
     ]);
 
     const db = normalize(
-      headerCol,
+      header,
       summaryCol,
       techSkillsCol,
       softSkillsCol,

@@ -40,7 +40,7 @@ Edit the CSV files in the `data/` directory:
 
 | File | Content |
 |------|---------|
-| `header.csv` | Name, phone, email, location, LinkedIn URL, GitHub URL |
+| `header.json` | Name, phone, email, location, LinkedIn URL, GitHub URL |
 | `professional-summary.csv` | Career summary |
 | `technical-skills.csv` | Technical skills list |
 | `soft-skills.csv` | Soft skills list |
