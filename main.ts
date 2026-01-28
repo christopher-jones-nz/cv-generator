@@ -1,13 +1,5 @@
 // main.ts (plain TS, no framework)
 
-declare const google: any;
-
-const CLIENT_ID =
-  "537194609804-tvj3898rujffqte5isb1nuk0mtje3osb.apps.googleusercontent.com";
-const SPREADSHEET_ID = "1b1Gwv9DpZr79lIj0WqoIpLTu7tjxIHkwC1SLtghrF4w";
-
-const SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
-
 type WorkExperienceRow = {
   roleTitle: string;
   startDate: string;
@@ -58,37 +50,61 @@ function setStatus(msg: string) {
   $("status").textContent = msg;
 }
 
-async function getAccessToken(): Promise<string> {
-  return await new Promise((resolve, reject) => {
-    const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: (resp: any) => {
-        if (resp?.access_token) resolve(resp.access_token);
-        else reject(new Error("No access token returned"));
-      },
-      error_callback: (err: any) => reject(err),
-    });
-    tokenClient.requestAccessToken();
-  });
+function parseCSV(text: string): string[][] {
+  const rows: string[][] = [];
+  let current: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && next === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        cell += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        current.push(cell);
+        cell = "";
+      } else if (char === '\n' || (char === '\r' && next === '\n')) {
+        current.push(cell);
+        if (current.some(c => c.length > 0)) {
+          rows.push(current);
+        }
+        current = [];
+        cell = "";
+        if (char === '\r') i++;
+      } else if (char !== '\r') {
+        cell += char;
+      }
+    }
+  }
+
+  // Handle last cell/row
+  if (cell || current.length > 0) {
+    current.push(cell);
+    if (current.some(c => c.length > 0)) {
+      rows.push(current);
+    }
+  }
+
+  return rows;
 }
 
-async function readRange(
-  accessToken: string,
-  rangeA1: string,
-): Promise<any[][]> {
-  const url =
-    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(SPREADSHEET_ID)}/values/` +
-    `${encodeURIComponent(rangeA1)}?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=FORMATTED_STRING`;
-
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!res.ok)
-    throw new Error(`Sheets API error ${res.status}: ${await res.text()}`);
-  const json = await res.json();
-  return (json.values ?? []) as any[][];
+async function loadCSV(filename: string): Promise<string[][]> {
+  const res = await fetch(`./data/${filename}`);
+  if (!res.ok) throw new Error(`Failed to load ${filename}: ${res.status}`);
+  const text = await res.text();
+  return parseCSV(text);
 }
 
 function asList(values: any[][]): string[] {
@@ -394,10 +410,7 @@ function openPrintWindow(html: string) {
 
 $("start").addEventListener("click", async () => {
   try {
-    setStatus("Authenticating…");
-    const token = await getAccessToken();
-
-    setStatus("Reading Google Sheet…");
+    setStatus("Loading CSV data…");
 
     const [
       headerCol,
@@ -411,16 +424,16 @@ $("start").addEventListener("click", async () => {
       achievementsCol,
       refereesGrid,
     ] = await Promise.all([
-      readRange(token, "'Header'!A:A"),
-      readRange(token, "'Professional Summary'!A:A"),
-      readRange(token, "'Technical Skills'!A:A"),
-      readRange(token, "'Soft Skills'!A:A"),
-      readRange(token, "'Programming Languages and Technologies'!A:A"),
-      readRange(token, "'Work Experience'!A:F"),
-      readRange(token, "'Education'!A:G"),
-      readRange(token, "'Hobbies and Interests'!A:A"),
-      readRange(token, "'Achievements and Extracurricular Activities'!A:A"),
-      readRange(token, "'Referees'!A:E"),
+      loadCSV("header.csv"),
+      loadCSV("professional-summary.csv"),
+      loadCSV("technical-skills.csv"),
+      loadCSV("soft-skills.csv"),
+      loadCSV("technologies.csv"),
+      loadCSV("work-experience.csv"),
+      loadCSV("education.csv"),
+      loadCSV("hobbies.csv"),
+      loadCSV("achievements.csv"),
+      loadCSV("referees.csv"),
     ]);
 
     const db = normalize(
