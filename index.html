@@ -24,6 +24,36 @@
         padding: 8px;
         vertical-align: top;
       }
+      .cv-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .cv-controls button {
+        padding: 8px 16px;
+        cursor: pointer;
+      }
+      .cv-preview {
+        width: 100%;
+        height: 80vh;
+        border: 1px solid #ddd;
+      }
+      @media print {
+        body > *:not(#app) {
+          display: none !important;
+        }
+        .cv-controls {
+          display: none !important;
+        }
+        .cv-preview {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+        }
+      }
     </style>
   </head>
   <body>

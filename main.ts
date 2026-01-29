@@ -267,10 +267,10 @@ function renderApp(db: CvDb) {
   app.appendChild(w);
 
   const gen = document.createElement("button");
-  gen.textContent = "Generate HTML";
+  gen.textContent = "Generate CV";
   gen.onclick = () => {
     const html = generateCvHtml(db, collectSelection(db));
-    openPrintWindow(html);
+    showCvPreview(html, () => renderApp(db));
   };
   app.appendChild(gen);
 }
@@ -424,14 +424,35 @@ function generateCvHtml(db: CvDb, selection: any): string {
 </html>`;
 }
 
-function openPrintWindow(html: string) {
-  const w = window.open("", "_blank");
-  if (!w) throw new Error("Popup blocked");
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  w.print();
+function showCvPreview(cvHtml: string, onStartAgain: () => void) {
+  const app = $("app");
+  app.innerHTML = "";
+
+  const controls = document.createElement("div");
+  controls.className = "cv-controls";
+
+  const startAgainBtn = document.createElement("button");
+  startAgainBtn.textContent = "Start Again";
+  startAgainBtn.onclick = onStartAgain;
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save as PDF";
+  saveBtn.onclick = () => window.print();
+
+  controls.appendChild(startAgainBtn);
+  controls.appendChild(saveBtn);
+  app.appendChild(controls);
+
+  const iframe = document.createElement("iframe");
+  iframe.className = "cv-preview";
+  app.appendChild(iframe);
+
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (iframeDoc) {
+    iframeDoc.open();
+    iframeDoc.write(cvHtml);
+    iframeDoc.close();
+  }
 }
 
 $("start").addEventListener("click", async () => {
